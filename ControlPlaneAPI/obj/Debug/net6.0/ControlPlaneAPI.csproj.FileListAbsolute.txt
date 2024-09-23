@@ -1,0 +1,6 @@
+/Users/lemme/Desktop/MLMDP(Machine-Learning-Model-Deploy-Platform)/ControlPlaneAPI/obj/Debug/net6.0/ControlPlaneAPI.csproj.AssemblyReference.cache
+/Users/lemme/Desktop/MLMDP(Machine-Learning-Model-Deploy-Platform)/ControlPlaneAPI/obj/Debug/net6.0/ControlPlaneAPI.GeneratedMSBuildEditorConfig.editorconfig
+/Users/lemme/Desktop/MLMDP(Machine-Learning-Model-Deploy-Platform)/ControlPlaneAPI/obj/Debug/net6.0/ControlPlaneAPI.AssemblyInfoInputs.cache
+/Users/lemme/Desktop/MLMDP(Machine-Learning-Model-Deploy-Platform)/ControlPlaneAPI/obj/Debug/net6.0/ControlPlaneAPI.AssemblyInfo.cs
+/Users/lemme/Desktop/MLMDP(Machine-Learning-Model-Deploy-Platform)/ControlPlaneAPI/obj/Debug/net6.0/ControlPlaneAPI.csproj.CoreCompileInputs.cache
+/Users/lemme/Desktop/MLMDP(Machine-Learning-Model-Deploy-Platform)/ControlPlaneAPI/obj/Debug/net6.0/ControlPlaneAPI.MvcApplicationPartsAssemblyInfo.cache

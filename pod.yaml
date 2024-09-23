@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: token-test
+  namespace: default
+spec:
+  serviceAccountName: control-plane-sa
+  containers:
+  - name: token-test-container
+    image: busybox
+    command: ["sleep", "3600"]

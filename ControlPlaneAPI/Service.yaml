@@ -1,0 +1,15 @@
+# csharp-api-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: csharp-api-service
+  namespace: model-deployments
+spec:
+  type: NodePort  # Exposing service via NodePort
+  selector:
+    app: csharp-api
+  ports:
+    - port: 80              # Expose on port 80
+      targetPort: 8080       # Target port inside the container
+      protocol: TCP
+      nodePort: 30152        # NodePort assigned for external access

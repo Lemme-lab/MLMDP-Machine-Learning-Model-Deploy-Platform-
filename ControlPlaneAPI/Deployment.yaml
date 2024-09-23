@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: csharp-api-deployment
+  namespace: model-deployments
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: csharp-api
+  template:
+    metadata:
+      labels:
+        app: csharp-api
+    spec:
+      containers:
+        - name: csharp-api-container
+          image: csharp-api:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - mountPath: /app/shared-models
+              name: shared-volume
+      volumes:
+        - name: shared-volume
+          persistentVolumeClaim:
+            claimName: shared-pvc
