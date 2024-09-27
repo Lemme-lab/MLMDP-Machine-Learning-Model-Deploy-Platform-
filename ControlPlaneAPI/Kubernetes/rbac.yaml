@@ -8,12 +8,14 @@ rules:
     resources: ["deployments"]
     verbs: ["create", "get", "list", "update", "delete"]
   - apiGroups: [""]  # Core API group
-    resources: ["namespaces", "services", "ingresses"]
+    resources: ["namespaces", "services", "pods", "pods/log"]
     verbs: ["get", "list", "create", "update", "delete"]
   - apiGroups: ["networking.k8s.io"]
     resources: ["ingresses"]
     verbs: ["get", "list", "create", "update", "delete"]
-
+  - apiGroups: [ "autoscaling" ]
+    resources: [ "horizontalpodautoscalers" ]
+    verbs: [ "create", "get", "list", "watch", "update", "delete" ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

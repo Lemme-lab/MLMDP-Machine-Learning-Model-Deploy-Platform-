@@ -47,3 +47,4 @@
 /Users/lemme/Desktop/MLMDP(Machine-Learning-Model-Deploy-Platform)/ControlPlaneAPI/obj/Debug/net8.0/ControlPlaneAPI.pdb
 /Users/lemme/Desktop/MLMDP(Machine-Learning-Model-Deploy-Platform)/ControlPlaneAPI/obj/Debug/net8.0/ControlPlaneAPI.genruntimeconfig.cache
 /Users/lemme/Desktop/MLMDP(Machine-Learning-Model-Deploy-Platform)/ControlPlaneAPI/obj/Debug/net8.0/ref/ControlPlaneAPI.dll
+/Users/lemme/Desktop/MLMDP(Machine-Learning-Model-Deploy-Platform)/ControlPlaneAPI/obj/Debug/net8.0/ControlPlaneAPI.sourcelink.json
