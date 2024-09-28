@@ -1,0 +1,18 @@
+<mat-card class="bottom-panel">
+  <div
+    class="file-drop-zone"
+    (dragover)="onDragOver($event)"
+    (drop)="onDrop($event)"
+    (dragleave)="onDragLeave($event)"
+    [class.drag-hover]="isDragOver">
+    <div class="file-upload-section">
+      <mat-icon class="upload-icon">add_circle</mat-icon>
+      <label class="upload-label">
+        <input type="file" (change)="onFileSelected($event)" accept="image/*" hidden>
+        <span>{{labelUpload}}</span>
+      </label>
+    </div>
+    <button mat-raised-button color="primary" (click)="uploadFile()" class="upload-button">Upload</button>
+  </div>
+  <mat-progress-bar *ngIf="uploadInProgress" mode="indeterminate"></mat-progress-bar>
+</mat-card>

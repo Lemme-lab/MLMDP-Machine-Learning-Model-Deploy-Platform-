@@ -1,0 +1,112 @@
+/* Full-width input field */
+.full-width-text {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+/* Status chip styles */
+.status-chip {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.chip {
+  padding: 5px 15px;
+  border-radius: 16px;
+  color: white;
+  font-weight: bold;
+  opacity: 0.85;
+  font-size: 14px;
+}
+
+.chip-running {
+  background-color: rgba(76, 175, 80, 0.85); /* Lighter green with opacity */
+}
+
+.chip-stopped {
+  background-color: rgba(244, 67, 54, 0.85); /* Lighter red with opacity */
+}
+
+/* Left and Right column styling */
+.p-col-left {
+  flex: 1;
+  padding-right: 10px; /* Spacing on the right side */
+}
+
+.p-col-right {
+  flex: 1;
+  padding-left: 10px; /* Spacing on the left side */
+  text-align: right; /* Align right-side text to the right */
+}
+
+/* Button Container */
+.button-container {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between; /* Ensure buttons are spread out */
+  gap: 16px; /* Add spacing between the buttons */
+}
+
+/* Start/Stop Button */
+.large-control-button {
+  padding: 12px 60px; /* Longer button with more padding */
+  font-size: 16px;
+  min-width: 220px; /* Minimum width to make it larger */
+}
+
+.control-button.stop {
+  background-color: #f44336; /* Red for Stop button */
+}
+
+.control-button.stop:hover {
+  background-color: #d32f2f; /* Darker red on hover */
+}
+
+/* Delete Button (now matching the Start/Stop button style) */
+.delete-control-button {
+  padding: 12px 60px; /* Same size as the Start/Stop button */
+  font-size: 16px;
+  min-width: 200px; /* Minimum width for the delete button */
+  background-color: #2196f3; /* Blue for Delete button */
+}
+
+.delete-control-button:hover {
+  background-color: #1976d2; /* Darker blue on hover */
+}
+
+/* Custom terminal for logs */
+.custom-terminal {
+  height: 150px;
+  width: calc(100% - 1rem);
+  background-color: rgb(41, 44, 51); /* Greenish box */
+  color: #9fd3f7; /* Slightly lighter text color */
+  border-radius: 5px;
+  padding: 10px;
+  margin-top: 20px;
+  overflow: auto;
+  font-family: monospace;
+}
+
+.p-col {
+  margin-bottom: 12px; /* Add spacing between rows */
+}
+
+.p-grid {
+  display: flex;
+  justify-content: space-between; /* Align columns side by side */
+}
+
+.p-d-flex {
+  display: flex;
+}
+
+.p-jc-between {
+  justify-content: space-between;
+}
+
+h2 {
+  font-size: 1.5em;
+  margin-bottom: 16px;
+  font-weight: bold;
+}

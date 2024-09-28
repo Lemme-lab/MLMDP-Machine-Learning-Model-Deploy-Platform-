@@ -1,0 +1,28 @@
+mat-toolbar {
+  background-color: rgb(34, 28, 33); /* Dark background for contrast */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5); /* Shadow for depth */
+  color: white; /* Ensure text stands out */
+  position: sticky;
+  top: 0;
+  z-index: 1000; /* Ensures navbar stays on top */
+}
+
+.navbar-logo {
+  margin-right: 10px;
+}
+
+.navbar-title {
+  font-size: 24px; /* Slightly larger font */
+  font-weight: bold;
+  color: #f0f0f0; /* Lighter text color for contrast */
+  flex-grow: 1;
+}
+
+.spacer {
+  flex-grow: 1;
+}
+
+
+.example-tab-icon {
+  margin-right: 8px;
+}

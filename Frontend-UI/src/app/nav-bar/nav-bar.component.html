@@ -1,0 +1,21 @@
+<mat-toolbar>
+  <mat-toolbar-row>
+    <img src="/favicon.ico" alt="Logo" width="40" height="40" class="navbar-logo" />
+    <span class="navbar-title">MLMDP</span>
+    <span class="spacer"></span>
+    <mat-button-toggle-group name="fontStyle" aria-label="Font Style" class="buttons"
+                             [hideSingleSelectionIndicator]="hideSingleSelectionIndicator()"
+                             (change)="onSelectionChange($event.value)">
+      <!-- Add active class based on the active route -->
+      <mat-button-toggle [value]="'deployments'"
+                         [ngClass]="{'active-toggle': isActive('deployments')}">
+        Deployments
+      </mat-button-toggle>
+
+      <mat-button-toggle [value]="'pods'"
+                         [ngClass]="{'active-toggle': isActive('pods')}">
+        Pods
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+  </mat-toolbar-row>
+</mat-toolbar>

@@ -36,55 +36,119 @@ namespace ControlPlaneAPI.Controllers
             return Ok("Control Plane API for managing ML models");
         }
 
-        [HttpGet("getDeployments")]
-        public async Task<IActionResult> GetAllDeployments()
+[HttpGet("getDeployments")]
+public async Task<IActionResult> GetAllDeployments()
+{
+    try
+    {
+        var deploymentList = await _kubernetesClient.ListNamespacedDeploymentAsync(_namespaceName);
+
+        if (deploymentList.Items.Count == 0)
         {
+            return Ok(new { Message = "No deployments found in the namespace." });
+        }
+
+        var deployments = new List<object>();
+
+        foreach (var deployment in deploymentList.Items)
+        {
+            object serviceDetails = null;
             try
             {
-                var deploymentList = await _kubernetesClient.ListNamespacedDeploymentAsync(_namespaceName);
-                var stringBuilder = new StringBuilder();
+                var deploymentName = deployment.Metadata.Name;
 
-                if (deploymentList.Items.Count == 0)
+                // Remove '-deployment' suffix from the deployment name to match the service name
+                var serviceName = $"python-service-{deploymentName.Replace("-deployment", "")}";
+
+                // Fetch the service using the constructed service name
+                var service = await _kubernetesClient.ReadNamespacedServiceAsync(serviceName, _namespaceName);
+
+                if (service != null)
                 {
-                    return Ok("No deployments found in the namespace.");
+                    serviceDetails = new
+                    {
+                        ClusterIP = service.Spec.ClusterIP,
+                        Ports = service.Spec.Ports?.Select(port => new { port.Port, port.TargetPort, port.Protocol })
+                    };
                 }
-
-                foreach (var deployment in deploymentList.Items)
+                else
                 {
-                    var creationTimestamp = deployment.Metadata.CreationTimestamp;
-                    var replicas = deployment.Spec.Replicas;
-                    var availableReplicas = deployment.Status.AvailableReplicas;
-                    var readyReplicas = deployment.Status.ReadyReplicas;
-                    var labels = string.Join(", ", deployment.Metadata.Labels.Select(l => $"{l.Key}: {l.Value}"));
-
-                    stringBuilder.AppendLine($"Deployment Name: {deployment.Metadata.Name}");
-                    stringBuilder.AppendLine($"  Replicas: {replicas}");
-                    stringBuilder.AppendLine($"  Available Replicas: {availableReplicas ?? 0}");
-                    stringBuilder.AppendLine($"  Ready Replicas: {readyReplicas ?? 0}");
-                    stringBuilder.AppendLine($"  Creation Timestamp: {creationTimestamp}");
-                    stringBuilder.AppendLine($"  Labels: {labels}");
-                    stringBuilder.AppendLine();
+                    serviceDetails = new { Error = $"Service not found for deployment: {deploymentName}" };
                 }
-
-                return Ok(stringBuilder.ToString());
             }
-            catch (Exception ex)
+            catch (Exception serviceEx)
             {
-                return StatusCode(500, $"Error retrieving deployments: {ex.Message}");
+                // Handle service retrieval errors
+                serviceDetails = new { Error = $"Error retrieving service: {serviceEx.Message}" };
             }
+
+            deployments.Add(new
+            {
+                Name = deployment.Metadata.Name,
+                Namespace = deployment.Metadata.NamespaceProperty,
+                Replicas = deployment.Spec.Replicas,
+                AvailableReplicas = deployment.Status.AvailableReplicas ?? 0,
+                ReadyReplicas = deployment.Status.ReadyReplicas ?? 0,
+                CreationTimestamp = deployment.Metadata.CreationTimestamp,
+                Labels = deployment.Metadata.Labels ?? new Dictionary<string, string>(),
+                Annotations = deployment.Metadata.Annotations ?? new Dictionary<string, string>(),
+                Selector = deployment.Spec.Selector?.MatchLabels ?? new Dictionary<string, string>(),
+                Strategy = deployment.Spec.Strategy?.Type ?? "RollingUpdate",
+                MinReadySeconds = deployment.Spec.MinReadySeconds,
+                RevisionHistoryLimit = deployment.Spec.RevisionHistoryLimit ?? 10,
+                Conditions = deployment.Status.Conditions?.Select(c => new
+                {
+                    Type = c.Type,
+                    Status = c.Status,
+                    LastTransitionTime = c.LastTransitionTime
+                }).ToList(),
+                PodTemplate = deployment.Spec.Template.Spec.Containers.Select(container => new
+                {
+                    ContainerName = container.Name,
+                    Image = container.Image,
+                    Ports = container.Ports?.Select(port => new { port.ContainerPort, port.Protocol }),
+                    Resources = new
+                    {
+                        Requests = container.Resources?.Requests,
+                        Limits = container.Resources?.Limits
+                    },
+                    Env = container.Env?.Select(envVar => new { envVar.Name, envVar.Value }),
+                    ImagePullPolicy = container.ImagePullPolicy
+                }),
+                OwnerReferences = deployment.Metadata.OwnerReferences?.Select(owner => new
+                {
+                    OwnerName = owner.Name,
+                    OwnerKind = owner.Kind
+                }),
+                Volumes = deployment.Spec.Template.Spec.Volumes?.Select(volume => new
+                {
+                    Name = volume.Name,
+                    VolumeType = volume.PersistentVolumeClaim != null ? "PersistentVolumeClaim" : "Other",
+                    ClaimName = volume.PersistentVolumeClaim?.ClaimName
+                }),
+                Service = serviceDetails // Add service details or error message
+            });
         }
-        
+
+        return Ok(deployments);
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, new { Error = $"Error retrieving deployments: {ex.Message}" });
+    }
+}
+
+
         [HttpGet("getDeploymentPods/{deploymentName}")]
         public async Task<IActionResult> GetAllPodsForDeployment(string deploymentName)
         {
             try
             {
                 var podList = await _kubernetesClient.ListNamespacedPodAsync(_namespaceName);
-                var stringBuilder = new StringBuilder();
 
                 if (podList.Items.Count == 0)
                 {
-                    return Ok("No pods found in the namespace.");
+                    return Ok(new { Message = "No pods found in the namespace." });
                 }
 
                 // Filter pods based on the deployment selector
@@ -95,31 +159,29 @@ namespace ControlPlaneAPI.Controllers
 
                 if (matchedPods.Count == 0)
                 {
-                    return Ok($"No pods found for deployment: {deploymentName}");
+                    return Ok(new { Message = $"No pods found for deployment: {deploymentName}" });
                 }
 
-                foreach (var pod in matchedPods)
+                // Create a list of pod details to return as JSON
+                var podDetails = matchedPods.Select(pod => new
                 {
-                    var nodeName = pod.Spec.NodeName;
-                    var containers = string.Join(", ", pod.Spec.Containers.Select(c => c.Image));
-                    var labels = string.Join(", ", pod.Metadata.Labels.Select(l => $"{l.Key}: {l.Value}"));
-                    var phase = pod.Status.Phase;
-                    var startTime = pod.Status.StartTime;
+                    PodName = pod.Metadata.Name,
+                    NodeName = pod.Spec.NodeName,
+                    Containers = pod.Spec.Containers.Select(c => new
+                    {
+                        c.Name,
+                        c.Image
+                    }).ToList(),
+                    Status = pod.Status.Phase,
+                    StartTime = pod.Status.StartTime,
+                    Labels = pod.Metadata.Labels.Select(l => new { Key = l.Key, Value = l.Value }).ToList()
+                }).ToList();
 
-                    stringBuilder.AppendLine($"Pod Name: {pod.Metadata.Name}");
-                    stringBuilder.AppendLine($"  Node Name: {nodeName}");
-                    stringBuilder.AppendLine($"  Containers: {containers}");
-                    stringBuilder.AppendLine($"  Status: {phase}");
-                    stringBuilder.AppendLine($"  Start Time: {startTime}");
-                    stringBuilder.AppendLine($"  Labels: {labels}");
-                    stringBuilder.AppendLine();
-                }
-
-                return Ok(stringBuilder.ToString());
+                return Ok(podDetails);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Error retrieving pods for deployment: {ex.Message}");
+                return StatusCode(500, new { Error = $"Error retrieving pods for deployment: {ex.Message}" });
             }
         }
 
@@ -128,61 +190,57 @@ namespace ControlPlaneAPI.Controllers
         {
             try
             {
-                List<Pod> PodList = new List<Pod>();
                 var podList = await _kubernetesClient.ListNamespacedPodAsync(_namespaceName);
-                var stringBuilder = new StringBuilder();
+                var pods = new List<object>(); // Create a list to store pod information in JSON format
 
                 foreach (var pod in podList.Items)
                 {
+                    string podLogs = string.Empty;
+
                     try
                     {
-                        var podLabels = pod.Metadata.Labels;
-                        var nodeName = pod.Spec.NodeName;
-                        var containers = string.Join(", ", pod.Spec.Containers.Select(c => c.Image));
-                        var phase = pod.Status.Phase;
-                        var startTime = pod.Status.StartTime;
-                        var resources = string.Join(", ", pod.Spec.Containers.Select(c =>
-                            $"Container: {c.Name}, CPU: {c.Resources?.Requests["cpu"]}, Memory: {c.Resources?.Requests["memory"]}"));
-
-                        if (podLabels == null || podLabels.Count == 0)
+                        // Read the logs for the pod using StreamReader to convert Stream to string
+                        using (var stream =
+                               await _kubernetesClient.ReadNamespacedPodLogAsync(pod.Metadata.Name, _namespaceName))
+                        using (var reader = new StreamReader(stream))
                         {
-                            return NotFound("The pod does not have any labels.");
-                        }
-
-                        var serviceList = await _kubernetesClient.ListNamespacedServiceAsync(_namespaceName);
-
-                        foreach (var service in serviceList.Items)
-                        {
-                            if (service.Spec.Selector != null && service.Spec.Selector.All(selector =>
-                                    podLabels.ContainsKey(selector.Key) && podLabels[selector.Key] == selector.Value))
-                            {
-                                stringBuilder.AppendLine($"Pod Name: {pod.Metadata.Name}");
-                                stringBuilder.AppendLine($"  Node Name: {nodeName}");
-                                stringBuilder.AppendLine($"  Containers: {containers}");
-                                stringBuilder.AppendLine($"  Status: {phase}");
-                                stringBuilder.AppendLine($"  Start Time: {startTime}");
-                                stringBuilder.AppendLine($"  Resources: {resources}");
-                                stringBuilder.AppendLine($"  Cluster IP: {service.Spec.ClusterIP}");
-                                stringBuilder.AppendLine(
-                                    $"  Ports: {string.Join(", ", service.Spec.Ports.Select(p => $"Port {p.Port}"))}");
-                                stringBuilder.AppendLine();
-                            }
+                            podLogs = await reader.ReadToEndAsync(); // Convert stream to string
                         }
                     }
-                    catch (Exception ex)
+                    catch (Exception logEx)
                     {
-                        return StatusCode(500, $"Error finding service for pod: {ex.Message}");
+                        podLogs = $"Error retrieving logs for pod {pod.Metadata.Name}: {logEx.Message}";
                     }
+
+                    var podInfo = new
+                    {
+                        PodName = pod.Metadata.Name,
+                        NodeName = pod.Spec.NodeName,
+                        Containers = pod.Spec.Containers.Select(c => c.Image),
+                        Status = pod.Status.Phase,
+                        StartTime = pod.Status.StartTime,
+                        Resources = pod.Spec.Containers.Select(c => new
+                        {
+                            ContainerName = c.Name,
+                            CPU = c.Resources?.Requests?["cpu"],
+                            Memory = c.Resources?.Requests?["memory"]
+                        }),
+                        ClusterIP = pod.Status.PodIP, // Use PodIP here
+                        Ports = pod.Spec.Containers.SelectMany(c => c.Ports.Select(p => p.ContainerPort)),
+                        Logs = podLogs // Add the logs to the pod information
+                    };
+
+                    pods.Add(podInfo); // Add each pod's info to the list
                 }
 
-                return Ok(stringBuilder.ToString());
+                return Ok(pods); // Return the list as JSON
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Error retrieving pods: {ex.Message}");
             }
         }
-        
+
         [HttpPost("stopPod")]
         public async Task<IActionResult> StopPod([FromBody] PodRequest request)
         {
@@ -202,16 +260,34 @@ namespace ControlPlaneAPI.Controllers
                 // Update the deployment with the new replica count
                 await _kubernetesClient.ReplaceNamespacedDeploymentAsync(deployment, deploymentName, _namespaceName);
 
-                return Ok($"Deployment {deploymentName} halted successfully (scaled to 0 replicas).");
+                var response = new
+                {
+                    PodName = request.PodName,
+                    DeploymentName = deploymentName,
+                    Replicas = 0,
+                    Status = "Success",
+                    Message = $"Deployment {deploymentName} halted successfully (scaled to 0 replicas)."
+                };
+
+                return Ok(response);
             }
             catch (HttpOperationException e)
             {
-                var errorContent = e.Response.Content;
-                return StatusCode(500, $"Error halting deployment: {errorContent}");
+                var errorResponse = new
+                {
+                    Status = "Error",
+                    Message = $"Error halting deployment: {e.Response.Content}"
+                };
+                return StatusCode(500, errorResponse);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"An error occurred: {ex.Message}");
+                var errorResponse = new
+                {
+                    Status = "Error",
+                    Message = $"An error occurred: {ex.Message}"
+                };
+                return StatusCode(500, errorResponse);
             }
         }
 
@@ -234,16 +310,34 @@ namespace ControlPlaneAPI.Controllers
                 // Update the deployment with the new replica count
                 await _kubernetesClient.ReplaceNamespacedDeploymentAsync(deployment, deploymentName, _namespaceName);
 
-                return Ok($"Deployment {deploymentName} started successfully (scaled to 1 replica).");
+                var response = new
+                {
+                    PodName = request.PodName,
+                    DeploymentName = deploymentName,
+                    Replicas = 1,
+                    Status = "Success",
+                    Message = $"Deployment {deploymentName} started successfully (scaled to 1 replica)."
+                };
+
+                return Ok(response);
             }
             catch (HttpOperationException e)
             {
-                var errorContent = e.Response.Content;
-                return StatusCode(500, $"Error starting deployment: {errorContent}");
+                var errorResponse = new
+                {
+                    Status = "Error",
+                    Message = $"Error starting deployment: {e.Response.Content}"
+                };
+                return StatusCode(500, errorResponse);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"An error occurred: {ex.Message}");
+                var errorResponse = new
+                {
+                    Status = "Error",
+                    Message = $"An error occurred: {ex.Message}"
+                };
+                return StatusCode(500, errorResponse);
             }
         }
 
@@ -252,7 +346,7 @@ namespace ControlPlaneAPI.Controllers
         {
             if (request == null || string.IsNullOrEmpty(request.PodName))
             {
-                return BadRequest("PodName is required.");
+                return BadRequest(new { Status = "Error", Message = "PodName is required." });
             }
 
             var podName = request.PodName;
@@ -270,19 +364,15 @@ namespace ControlPlaneAPI.Controllers
             // Attempt to delete the pod
             try
             {
-                Console.WriteLine($"Attempting to delete pod: {podName}");
                 await _kubernetesClient.DeleteNamespacedPodAsync(podName, _namespaceName, deleteOptions);
-                Console.WriteLine($"Pod '{podName}' deleted successfully.");
                 deletedResources.Add($"Pod: {podName}");
             }
             catch (HttpOperationException e) when (e.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                Console.WriteLine($"Pod '{podName}' not found.");
                 failedResources.Add($"Pod: {podName}");
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Failed to delete pod: {e.Message}");
                 failedResources.Add($"Pod: {podName}");
             }
 
@@ -290,19 +380,15 @@ namespace ControlPlaneAPI.Controllers
             var deploymentName = $"{basePodName}-deployment";
             try
             {
-                Console.WriteLine($"Attempting to delete deployment: {deploymentName}");
                 await _kubernetesClient.DeleteNamespacedDeploymentAsync(deploymentName, _namespaceName, deleteOptions);
-                Console.WriteLine($"Deployment '{deploymentName}' deleted successfully.");
                 deletedResources.Add($"Deployment: {deploymentName}");
             }
             catch (HttpOperationException e) when (e.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                Console.WriteLine($"Deployment '{deploymentName}' not found.");
                 failedResources.Add($"Deployment: {deploymentName}");
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Failed to delete deployment: {e.Message}");
                 failedResources.Add($"Deployment: {deploymentName}");
             }
 
@@ -310,19 +396,15 @@ namespace ControlPlaneAPI.Controllers
             var serviceName = $"python-service-{basePodName}";
             try
             {
-                Console.WriteLine($"Attempting to delete service: {serviceName}");
                 await _kubernetesClient.DeleteNamespacedServiceAsync(serviceName, _namespaceName, deleteOptions);
-                Console.WriteLine($"Service '{serviceName}' deleted successfully.");
                 deletedResources.Add($"Service: {serviceName}");
             }
             catch (HttpOperationException e) when (e.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                Console.WriteLine($"Service '{serviceName}' not found.");
                 failedResources.Add($"Service: {serviceName}");
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Failed to delete service: {e.Message}");
                 failedResources.Add($"Service: {serviceName}");
             }
 
@@ -330,26 +412,22 @@ namespace ControlPlaneAPI.Controllers
             var hpaName = $"{basePodName}-hpa";
             try
             {
-                Console.WriteLine($"Attempting to delete HPA: {hpaName}");
                 await _kubernetesClient.DeleteNamespacedHorizontalPodAutoscalerAsync(hpaName, _namespaceName,
                     deleteOptions);
-                Console.WriteLine($"HPA '{hpaName}' deleted successfully.");
                 deletedResources.Add($"HPA: {hpaName}");
             }
             catch (HttpOperationException e) when (e.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                Console.WriteLine($"HPA '{hpaName}' not found.");
                 failedResources.Add($"HPA: {hpaName}");
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Failed to delete HPA: {e.Message}");
                 failedResources.Add($"HPA: {hpaName}");
             }
 
-            // Return a structured JSON response
             return Ok(new
             {
+                Status = "Completed",
                 Deleted = deletedResources,
                 FailedToDelete = failedResources
             });
@@ -363,11 +441,25 @@ namespace ControlPlaneAPI.Controllers
                 var deployment = await _kubernetesClient.ReadNamespacedDeploymentAsync(request.PodName, _namespaceName);
                 deployment.Spec.Replicas = request.Replicas;
                 await _kubernetesClient.ReplaceNamespacedDeploymentAsync(deployment, request.PodName, _namespaceName);
-                return Ok($"Deployment {request.PodName} scaled to {request.Replicas} replicas.");
+
+                var response = new
+                {
+                    PodName = request.PodName,
+                    Replicas = request.Replicas,
+                    Status = "Success",
+                    Message = $"Deployment {request.PodName} scaled to {request.Replicas} replicas."
+                };
+
+                return Ok(response);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Failed to scale pod: {ex.Message}");
+                var errorResponse = new
+                {
+                    Status = "Error",
+                    Message = $"Failed to scale pod: {ex.Message}"
+                };
+                return StatusCode(500, errorResponse);
             }
         }
 

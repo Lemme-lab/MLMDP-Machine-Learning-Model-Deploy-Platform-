@@ -1,0 +1,60 @@
+<p-card styleClass="p-mb-3 p-shadow-3" header="{{ deployment.podName }}" subheader="Deployment Details">
+  <!-- Pod Name (larger and at the top) -->
+  <div class="p-col">
+    <h2>{{ deployment.podName }}</h2>
+  </div>
+
+  <!-- Service IP and Service Port side by side -->
+  <div class="p-grid">
+    <div class="p-col-left">
+      <p><strong>Service IP:</strong> {{ deployment.podServiceIp }}</p>
+    </div>
+    <div class="p-col-right">
+      <p><strong>Service Port:</strong> {{ deployment.podServiceIpPort }}</p>
+    </div>
+  </div>
+
+  <!-- Status and Containers side by side -->
+  <div class="p-grid">
+    <div class="p-col-left">
+      <p><strong>Status:</strong> {{ deployment.status }}</p>
+    </div>
+    <div class="p-col-right">
+      <p><strong>Containers:</strong> {{ deployment.specContainers }}</p>
+    </div>
+  </div>
+
+  <!-- Status Message -->
+  <div class="p-col">
+    <p><strong>Status Message:</strong> {{ deployment.statusMessage }}</p>
+  </div>
+
+  <!-- Logs Section -->
+  <div class="custom-terminal">
+    <p><strong>Logs:</strong></p>
+    <div>{{ logs }}</div>
+  </div>
+
+  <!-- Incrementer and Control Buttons (Start/Stop and Delete) side by side -->
+  <div class="p-col p-d-flex p-jc-between align-center">
+    <!-- Buttons (Start/Stop and Delete) -->
+    <div class="button-container">
+      <button mat-raised-button color="warn" class="large-control-button" (click)="togglePodState()">
+        {{ deployment.status === 'Running' ? 'Stop' : 'Start' }}
+      </button>
+
+      <!-- Delete Button -->
+      <button mat-raised-button color="warn" class="large-control-button" (click)="deleteDeployment()">
+        Delete
+      </button>
+    </div>
+  </div>
+
+  <!-- Status Chip (moved to the far right corner) -->
+  <div class="status-chip">
+    <div class="chip" [ngClass]="deployment.status === 'Running' ? 'chip-running' : 'chip-stopped'">
+      {{ deployment.status }}
+    </div>
+  </div>
+  <hr />
+</p-card>

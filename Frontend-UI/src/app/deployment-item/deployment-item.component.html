@@ -1,0 +1,99 @@
+<p-card styleClass="p-mb-3 p-shadow-3 deployment-card" subheader="Deployment Information">
+  <!-- Deployment Name and Creation Timestamp -->
+  <div class="header-info">
+    <h2
+      class="deployment-name"
+      [ngClass]="{'running': isModelRunning, 'not-running': !isModelRunning}">
+      {{ deployment.name }}
+    </h2>
+
+    <p class="timestamp"><strong>Created:</strong> {{ deployment.creationTimestamp | date:'short' }}</p>
+  </div>
+
+  <!-- Grouping Namespace, Replicas, Strategy, and Revision History in a single line -->
+  <div class="p-grid compact-info">
+    <div class="p-col">
+      <p><strong>Namespace:</strong> {{ deployment.namespace }}</p>
+      <p><strong>Replicas:</strong> {{ deployment.replicas }}</p>
+    </div>
+    <div class="p-col">
+      <p><strong>Strategy:</strong> {{ deployment.strategy }}</p>
+      <p><strong>Revision History:</strong> {{ deployment.revisionHistoryLimit }}</p>
+    </div>
+  </div>
+
+  <!-- Container Information and Volumes side by side -->
+  <div class="p-grid container-volume-info">
+    <div class="p-col">
+      <p><strong>Container:</strong> {{ deployment.podTemplate[0].containerName }}</p>
+      <p><strong>Image:</strong> {{ deployment.podTemplate[0].image }}</p>
+    </div>
+    <div class="p-col">
+      <p><strong>Volume Type:</strong> {{ deployment.volumes[0].volumeType }}</p>
+      <p><strong>Volume Claim:</strong> {{ deployment.volumes[0].claimName }}</p>
+    </div>
+  </div>
+
+  <!-- Status and Conditions grouped side by side -->
+  <div class="p-grid status-info">
+    <div class="p-col">
+      <p><strong>Status:</strong> {{ deployment.conditions[0].type }} ({{ conditionsStatus1 }})</p>
+    </div>
+    <div class="p-col">
+      <p><strong>Progressing:</strong> {{ conditionsStatus2 }}</p>
+    </div>
+  </div>
+
+  <!-- Pod List with Chip Set (3xY grid) -->
+  <div class="pod-chips-section">
+    <div class="pod-chips-section">
+      <mat-grid-list cols="3" rowHeight="50px" gutterSize="5px">
+        <mat-grid-tile *ngFor="let pod of podsList.slice(0, 9)">
+          <mat-chip class="pod-chip">{{ pod.podName }}</mat-chip>
+        </mat-grid-tile>
+      </mat-grid-list>
+
+      <!-- Display ellipsis if there are more than 9 pods -->
+      <div *ngIf="podsList.length > 9" class="more-indicator">
+        ...
+      </div>
+    </div>
+  </div>
+
+  <div class="ml-model-container">
+    <div class="ml-model-inputs">
+      <mat-form-field appearance="outline" class="input-field">
+        <mat-label>ML Model Data</mat-label>
+        <input matInput [(ngModel)]="mlModelData" placeholder="Enter model input" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="output-field">
+        <mat-label>Output</mat-label>
+        <input matInput [value]="modelOutput" readonly />
+      </mat-form-field>
+    </div>
+
+    <!-- Incrementer section with buttons side by side -->
+    <div class="incrementer-controls">
+      <div class="incrementer-stack">
+        <button mat-raised-button color="primary" class="buttonNumberSelectorPlus" (click)="increment()">+</button>
+        <input class="incrementer-input" type="number" [(ngModel)]="modelSettings" min="1" max="100" readonly />
+        <button mat-raised-button color="primary" class="buttonNumberSelectorMinus" (click)="decrement()">−</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Control Buttons -->
+  <!-- Control Buttons with MUI color themes -->
+  <!-- Control Buttons with MUI color themes -->
+  <div class="button-container">
+    <button mat-raised-button color="primary" class="action-button" (click)="sendData()">Send Data</button>
+    <button mat-raised-button color="primary" class="action-button" (click)="toggleModel()">
+      {{ isModelRunning ? 'Stop' : 'Start' }}
+    </button>
+    <button mat-raised-button color="primary" class="action-button" (click)="deleteDeployment()">Delete</button>
+  </div>
+
+
+
+</p-card>

@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.IO;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
@@ -12,6 +11,18 @@ builder.Services.AddControllers();
 
 // Define the namespace name
 var namespaceName = "model-deployments"; // New namespace name
+
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        policy =>
+        {
+            policy.AllowAnyOrigin()
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+});
 
 builder.Services.AddSingleton<IKubernetes>(sp =>
 {
@@ -34,6 +45,9 @@ builder.Services.AddSingleton<IKubernetes>(sp =>
 builder.Services.AddSingleton(namespaceName);
 
 var app = builder.Build();
+
+// Enable CORS globally
+app.UseCors("AllowAll");
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())

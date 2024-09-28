@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ControlPlaneAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3d9637574e057ad2eb5f2fae70e5558c5ef3dafa")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1f4dd68b568d1a3a4bdb346578bdd89d7aca956c")]
 [assembly: System.Reflection.AssemblyProductAttribute("ControlPlaneAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ControlPlaneAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,0 +1,5 @@
+<mat-grid-list cols="3" rowHeight="1:1" gutterSize="50px" class="list">
+  <mat-grid-tile *ngFor="let deployment of deploymentsList" [colspan]="1" [rowspan]="1">
+    <app-pod-item [deployment]="deployment"></app-pod-item>
+  </mat-grid-tile>
+</mat-grid-list>

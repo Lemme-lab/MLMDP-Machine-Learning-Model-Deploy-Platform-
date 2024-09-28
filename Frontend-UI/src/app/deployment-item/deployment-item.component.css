@@ -1,0 +1,134 @@
+.deployment-card {
+  padding: 12px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  width: 100%;
+  color: #2c3e50;
+}
+
+.header-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.deployment-name {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #1f6fb2;
+}
+
+.timestamp {
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.p-grid {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.p-col {
+  flex: 1;
+  padding-right: 10px;
+}
+
+.pod-chips-section {
+  margin-top: 10px;
+}
+
+.pod-chip {
+  background-color: #1f6fb2;
+  color: white;
+}
+
+.ml-model-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 10px;
+}
+
+.ml-model-inputs {
+  flex: 3;
+}
+
+.incrementer-controls {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.incrementer-stack {
+  margin-left: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.incrementer-button {
+  width: 150px; /* Increased width */
+  height: 50px; /* Taller buttons */
+  font-size: 1.5rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-bottom: 5px;
+}
+
+.incrementer-input {
+  width: 120px;
+  text-align: center;
+  font-size: 1.2rem;
+  margin-bottom: 5px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  outline: none;
+}
+
+.incrementer-input:focus {
+  border-color: #01213b;
+}
+
+.button-container {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.action-button {
+  flex: 1;
+  height: 50px;
+  margin: 0 10px;
+}
+
+.input-field, .output-field {
+  width: 100%;
+}
+
+.buttonNumberSelectorPlus {
+  width: 150px;
+  margin-bottom: 5px;
+}
+
+.buttonNumberSelectorMinus {
+  width: 150px;
+  margin-top: 5px;
+}
+/* Light green for running deployment */
+.running {
+  color: lightgreen;
+}
+
+/* Light red for non-running deployment */
+.not-running {
+  color: lightcoral;
+}
+

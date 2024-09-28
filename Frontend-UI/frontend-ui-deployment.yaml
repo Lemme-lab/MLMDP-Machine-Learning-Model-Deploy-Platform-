@@ -1,8 +1,8 @@
-# frontend-ui-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend-ui-deployment
+  namespace: model-deployments
 spec:
   replicas: 1
   selector:
@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
         - name: frontend-ui
-          image: your-dockerhub-username/frontend-ui:latest
+          image: frontend-ui:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 80
 ---
@@ -23,6 +24,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend-ui-service
+  namespace: model-deployments
 spec:
   selector:
     app: frontend-ui
@@ -30,4 +32,5 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 80
-  type: LoadBalancer
+      nodePort: 30080  # Specify a static NodePort (optional)
+  type: NodePort
