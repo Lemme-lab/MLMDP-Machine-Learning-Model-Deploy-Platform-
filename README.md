@@ -117,7 +117,3 @@ We welcome contributions! Please submit a pull request or open an issue if you f
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-This README provides a comprehensive introduction to your platform, including features, setup, and key API endpoints. You can customize it further by replacing the `path_to_image_X` with links to your screenshots in the repository.
