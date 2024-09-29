@@ -1,4 +1,4 @@
-# MLMDP - Machine Learning Models Deployment Platform
+![image](https://github.com/user-attachments/assets/0d7b3dca-0e4e-4e3c-8ab1-45d8721fb0c8)# MLMDP - Machine Learning Models Deployment Platform
 
 MLMDP is a Kubernetes-based platform for deploying, managing, and monitoring machine learning models at scale. With features for model deployment, scaling, logs, and monitoring, MLMDP simplifies the process of running ML models in production.
 
@@ -12,6 +12,8 @@ MLMDP is a Kubernetes-based platform for deploying, managing, and monitoring mac
 - **Service Exposure**: Deployed models are exposed via Kubernetes LoadBalancer services, with service IPs and ports dynamically allocated.
 
 ## Screenshots
+### Flowchart
+![Blank diagram-6](https://github.com/user-attachments/assets/e65eb9db-afbb-4342-b8a6-0310e3ac9108)
 
 ### Deployment Dashboard
 
@@ -35,24 +37,48 @@ MLMDP is a Kubernetes-based platform for deploying, managing, and monitoring mac
 - Docker for building model images
 - .NET 6 SDK for API development
 
-### Setup
+### Setup (Mac Only at the time)
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/mlmdp.git
+   git clone https://github.com/Lemme-lab/MLMDP-Machine-Learning-Model-Deploy-Platform-.git
    cd mlmdp
    ```
 
-2. Build and deploy the MLMDP components:
+2. Build and deploy the MLMDP Backend:
    ```bash
-   kubectl apply -f k8s/deployment.yaml
+   minikube delete
+   minikube start
+   eval $(minikube docker-env)   
+   cd ControlPlaneAPI
+   docker build -t csharp-api:latest -f Kubernetes/NetAPI.Dockerfile .     
+   kubectl create namespace model-deployments 
+   kubectl apply -f kubernetes/Service.yaml  
+   kubectl apply -f kubernetes/rbac.yaml 
+   kubectl apply -f kubernetes/PersistentVolume.yaml   
+   kubectl apply -f kubernetes/Deployment.yaml   
+   cd ..
+   cd PythonEnv
+   docker build -t ml-pythonenv:latest -f PythonEnv.Dockerfile .
+   minikube service csharp-api-service -n model-deployments
    ```
 
-3. Upload your machine learning models through the platform's interface, or use the `/api/ControlPlane/uploadModel` API endpoint to deploy models programmatically.
-
-4. Access the MLMDP UI through the Kubernetes service endpoint:
+3. Check the generated Port and enter it into the Frontend-UI/scr/app/Constants.ts
+   
+4. Build and deploy the MLMDP Frontend:
    ```bash
-   minikube service frontend-ui-service --url
+   eval $(minikube docker-env)   
+   docker build -t frontend-ui:latest -f FrontendUI.Dockerfile .
+   kubectl apply -f frontend-ui-deployment.yaml 
+   kubectl rollout restart deployment frontend-ui-deployment -n model-deployments 
+   minikube service frontend-ui-service -n model-deployments
+   ```
+
+5. Upload your machine learning models through the platform's interface, or use the `/api/ControlPlane/uploadModel` API endpoint to deploy models programmatically.
+
+6. Access the MLMDP UI through the Kubernetes service endpoint:
+   ```bash
+   minikube service frontend-ui-service --url -n model-deployments
    ```
 
 ### API Endpoints
@@ -67,9 +93,12 @@ MLMDP is a Kubernetes-based platform for deploying, managing, and monitoring mac
 
 To send data to a deployed model:
 ```bash
-curl -X POST http://{service_ip}:80/predict/ \
-   -H 'Content-Type: application/json' \
-   -d '{"features": [1.0, 2.0, 3.0, 4.0]}'
+curl --location 'http://127.0.0.1:52066/api/ControlPlane/callDeploymentAPI' \
+    --header 'Content-Type: application/json' \
+    --data '{
+       "ip": "python-service-chatllm.model-deployments.svc.cluster.local",
+       "features": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]
+    }'
 ```
 
 ### Scaling and Monitoring
