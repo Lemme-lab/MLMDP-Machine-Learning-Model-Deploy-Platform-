@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { CommonModule } from '@angular/common';
-import {port} from "../constants";
+import { port } from "../constants";
 
 @Component({
   selector: 'app-bottom-panel-component',
@@ -22,15 +22,18 @@ export class BottomPanelComponent {
 
   constructor(private http: HttpClient) {}
 
+  // Triggered when a file is selected through the file input
   onFileSelected(event: any): void {
     this.selectedFile = event.target.files[0];
   }
 
+  // Triggered when a file is dragged over the drop zone
   onDragOver(event: DragEvent): void {
     event.preventDefault();
     this.isDragOver = true;
   }
 
+  // Triggered when a file is dropped onto the drop zone
   onDrop(event: DragEvent): void {
     event.preventDefault();
     this.isDragOver = false;
@@ -42,25 +45,29 @@ export class BottomPanelComponent {
     }
   }
 
+  // Triggered when the file is dragged away from the drop zone
   onDragLeave(event: DragEvent): void {
     this.isDragOver = false;
   }
 
+  // Function to upload the selected file to the backend API
   uploadFile(): void {
     if (this.selectedFile) {
       this.uploadInProgress = true;
 
       const formData = new FormData();
       formData.append('file', this.selectedFile, this.selectedFile.name);
+
+      // Make HTTP POST request to upload the file
       this.http.post(`http://127.0.0.1:${port}/api/ControlPlane/uploadModel`, formData).subscribe({
         next: (response) => {
           console.log('Upload successful', response);
           this.uploadInProgress = false;
-          this.labelUpload = "Drag & Drop or Click to Choose File";
+          this.labelUpload = "Drag & Drop or Click to Choose File"; // Reset label after upload
         },
         error: (error) => {
           console.error('Upload failed', error);
-          this.uploadInProgress = false;
+          this.uploadInProgress = false; // Stop progress bar on error
         }
       });
     }

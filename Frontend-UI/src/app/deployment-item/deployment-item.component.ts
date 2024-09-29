@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import {ChangeDetectorRef, Component, Input, OnInit} from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -11,7 +11,7 @@ import { MatGridListModule } from '@angular/material/grid-list';
 import { CardModule } from 'primeng/card';
 import { TerminalModule } from 'primeng/terminal';
 import { InputNumberModule } from 'primeng/inputnumber';
-import {port} from "../constants";
+import { port } from "../constants";
 
 interface Pod {
   podName: string;
@@ -51,10 +51,10 @@ export class DeploymentItemComponent implements OnInit {
   modelOutput: string = '';
   modelSettings: number = 0; // Default value for incrementer
   isModelRunning: boolean = false;
-  conditionsStatus1:string  = "";
-  conditionsStatus2:string  = "";
+  conditionsStatus1: string = "";
+  conditionsStatus2: string = "";
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) { }
 
   ngOnInit() {
     if (this.deployment.logs) {
@@ -65,8 +65,6 @@ export class DeploymentItemComponent implements OnInit {
     if (this.deployment.availableReplicas) {
       this.modelSettings = this.deployment.availableReplicas; // Assuming deployment has a modelSettings field
     }
-
-    console.log("Crack", this.deployment.conditions[this.deployment.conditions.length - 1].status);
 
     if (this.deployment.availableReplicas == 0) {
       this.isModelRunning = false;
@@ -83,10 +81,10 @@ export class DeploymentItemComponent implements OnInit {
 
   // Fetch pods using the updated API response structure
   getPodsForDeployment(deploymentName: string) {
-    const apiUrl = `http://127.0.0.1:65339/api/ControlPlane/getDeploymentPods/${deploymentName}`;
-    try {
-      this.http.get<Pod[]>(apiUrl).subscribe({
-        next: (data: Pod[]) => {
+    const apiUrl = `http://127.0.0.1:${port}/api/ControlPlane/getDeploymentPods/${deploymentName}`;
+    this.http.get<Pod[]>(apiUrl).subscribe({
+      next: (data: Pod[]) => {
+        try {
           this.podsList = data.map(pod => ({
             podName: pod.podName,
             nodeName: pod.nodeName,
@@ -96,21 +94,21 @@ export class DeploymentItemComponent implements OnInit {
             startTime: pod.startTime,
             labels: pod.labels.map((label: any) => `${label.key}: ${label.value}`).join(', ')
           }));
-        },
-        error: (error) => {
-          console.error('Error fetching pods:', error);
-        }
-      });
-    } catch (e) {
+        }catch (e) {
 
-    }
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching pods:', error);
+      }
+    });
   }
 
-  private adjustReplicas(){
+  private adjustReplicas() {
     console.log(this.deployment.name);
     console.log(this.modelSettings);
 
-    const apiUrl = `http://127.0.0.1:65339/api/ControlPlane/scalePod`;
+    const apiUrl = `http://127.0.0.1:${port}/api/ControlPlane/scalePod`;
     const postData = {
       PodName: this.deployment.name,
       Replicas: this.modelSettings
@@ -119,6 +117,7 @@ export class DeploymentItemComponent implements OnInit {
     this.http.post(apiUrl, postData).subscribe({
       next: (response) => {
         console.log('POST request successful:', response);
+
       },
       error: (error) => {
         console.error('Error in POST request:', error);
@@ -147,13 +146,11 @@ export class DeploymentItemComponent implements OnInit {
     if (this.modelSettings > 1) {
       this.modelSettings--;
     }
-
     this.adjustReplicas();
   }
 
   sendData() {
     console.log('Sending ML model data:', this.mlModelData);
-
 
     const apiUrl = `http://127.0.0.1:${port}/api/ControlPlane/callDeploymentAPI`;
     const array: number[] = JSON.parse(this.mlModelData);
@@ -172,7 +169,6 @@ export class DeploymentItemComponent implements OnInit {
         console.error('Error in POST request:', error);
       }
     });
-
   }
 
   stopModel() {
@@ -180,7 +176,7 @@ export class DeploymentItemComponent implements OnInit {
     this.conditionsStatus1 = 'False';
     this.conditionsStatus2 = 'False';
 
-    const apiUrl = `http://127.0.0.1:${port}/api/ControlPlane/stopPod`;
+    const apiUrl = `http://127.0.0.1:${port}/api/ControlPlane/stopDeployment`;
     const postData = {
       PodName: this.deployment.name,
     };
@@ -188,6 +184,16 @@ export class DeploymentItemComponent implements OnInit {
     this.http.post(apiUrl, postData).subscribe({
       next: (response) => {
         console.log('POST request successful:', response);
+
+        // Clear the podsList when the pod is stopped
+        this.podsList = [];
+
+        setTimeout(() => {
+          console.log("Reloading the page");
+          this.podsList = [];
+          this.reloadComponent();
+
+        }, 4000);  // Adjust the delay time as needed
       },
       error: (error) => {
         console.error('Error in POST request:', error);
@@ -195,12 +201,23 @@ export class DeploymentItemComponent implements OnInit {
     });
   }
 
+
+// Method to reload data and trigger change detection
+  reloadComponent() {
+    // Fetch updated podsList or any other data
+    this.getPodsForDeployment(this.deployment.name);
+
+    // Trigger change detection manually if needed
+    this.cdr.detectChanges();
+  }
+
+
   startModel() {
-    console.log('Model stopped');
+    console.log('Model started');
     this.conditionsStatus1 = 'True';
     this.conditionsStatus2 = 'True';
 
-    const apiUrl = `http://127.0.0.1:${port}/api/ControlPlane/startPod`;
+    const apiUrl = `http://127.0.0.1:${port}/api/ControlPlane/startDeployment`;
     const postData = {
       PodName: this.deployment.name,
     };

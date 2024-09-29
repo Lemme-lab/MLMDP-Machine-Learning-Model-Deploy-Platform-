@@ -8,6 +8,17 @@ import {debounceTime, interval, Subject} from "rxjs";
 import {switchMap, takeUntil} from "rxjs/operators";
 import {PodtItemComponent} from "../pod-item/pod-item.component";
 import {port} from "../constants";
+import {
+  Condition,
+  ContainerPort,
+  Deployment,
+  OwnerReference,
+  PodTemplate,
+  Service,
+  ServicePort, TargetPort,
+  Volume
+} from "../Deployment";
+import {isEqual} from "lodash";
 
 @Component({
   selector: 'app-pods',
@@ -24,7 +35,8 @@ import {port} from "../constants";
 })
 
 export class PodsComponent implements OnInit, OnDestroy {
-  deploymentsList: Pod[] = [];
+  PodList: Pod[] = [];
+  deploymentsList: Deployment[] = [];
   apiUrl: string = `http://127.0.0.1:${port}/api/ControlPlane/getallPods`;
   previousData: string = ''; // Stores the previous data as a string for comparison
   private unsubscribe$ = new Subject<void>(); // Subject to signal unsubscription
@@ -68,8 +80,8 @@ export class PodsComponent implements OnInit, OnDestroy {
   handleApiResponse(data: any[]): void {
     const newDataString = JSON.stringify(data);
     if (newDataString !== this.previousData) {
-      this.deploymentsList = [];
-      this.deploymentsList = data.map(item => new Pod(
+      this.PodList = [];
+      this.PodList = data.map(item => new Pod(
         item.clusterIP,
         item.ports[0]?.toString(),
         item.podName,

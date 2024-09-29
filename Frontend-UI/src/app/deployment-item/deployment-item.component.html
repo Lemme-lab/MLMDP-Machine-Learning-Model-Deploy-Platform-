@@ -44,19 +44,26 @@
     </div>
   </div>
 
-  <!-- Pod List with Chip Set (3xY grid) -->
-  <div class="pod-chips-section">
-    <mat-grid-list cols="3" rowHeight="50px" gutterSize="5px">
-      <mat-grid-tile *ngFor="let pod of podsList.slice(0, 9)">
-        <mat-chip class="pod-chip">{{ pod.podName }}</mat-chip>
-      </mat-grid-tile>
-    </mat-grid-list>
+  <ng-container *ngIf="conditionsStatus1 === 'True' && conditionsStatus2 === 'True'; else noPodsMessage">
+    <div class="pod-chips-section">
+      <mat-grid-list cols="3" rowHeight="50px" gutterSize="5px">
+        <mat-grid-tile *ngFor="let pod of podsList.slice(0, 9)">
+          <mat-chip class="pod-chip">{{ pod.podName }}</mat-chip>
+        </mat-grid-tile>
+      </mat-grid-list>
 
-    <!-- Display ellipsis if there are more than 9 pods -->
-    <div *ngIf="podsList.length > 9" class="more-indicator">
-      ...
+      <!-- Display ellipsis if there are more than 9 pods -->
+      <div *ngIf="podsList.length > 9" class="more-indicator">
+        ...
+      </div>
     </div>
-  </div>
+  </ng-container>
+
+  <!-- Message when no pods are running or conditions are false -->
+  <ng-template #noPodsMessage>
+    <p class="no-pods-message">No pods are currently running.</p>
+  </ng-template>
+
 
   <!-- Conditionally hide ML model input, incrementer, and buttons based on deployment name -->
   <ng-container *ngIf="deployment.name !== 'csharp-api-deployment' && deployment.name !== 'frontend-ui-deployment'; else placeholderSpacer">

@@ -144,8 +144,7 @@ namespace ControlPlaneAPI.Controllers
                 return StatusCode(500, new { Error = $"Error retrieving deployments: {ex.Message}" });
             }
         }
-
-
+        
         [HttpGet("getDeploymentPods/{deploymentName}")]
         public async Task<IActionResult> GetAllPodsForDeployment(string deploymentName)
         {
@@ -247,9 +246,48 @@ namespace ControlPlaneAPI.Controllers
                 return StatusCode(500, $"Error retrieving pods: {ex.Message}");
             }
         }
+        
+        [HttpDelete("deletePod")]
+        public async Task<IActionResult> DeletePod([FromBody] PodRequest request)
+        {
+            try
+            {
+                var podName = request.PodName;
 
-        [HttpPost("stopPod")]
-        public async Task<IActionResult> StopPod([FromBody] PodRequest request)
+                // Delete the pod
+                await _kubernetesClient.DeleteNamespacedPodAsync(podName, _namespaceName);
+
+                var response = new
+                {
+                    PodName = podName,
+                    Status = "Success",
+                    Message = $"Pod {podName} deleted successfully."
+                };
+
+                return Ok(response);
+            }
+            catch (HttpOperationException e)
+            {
+                var errorResponse = new
+                {
+                    Status = "Error",
+                    Message = $"Error deleting pod: {e.Response.Content}"
+                };
+                return StatusCode(500, errorResponse);
+            }
+            catch (Exception ex)
+            {
+                var errorResponse = new
+                {
+                    Status = "Error",
+                    Message = $"An error occurred: {ex.Message}"
+                };
+                return StatusCode(500, errorResponse);
+            }
+        }
+        
+        [HttpPost("stopDeployment")]
+        public async Task<IActionResult> StopDeployment([FromBody] PodRequest request)
         {
             try
             {
@@ -298,8 +336,8 @@ namespace ControlPlaneAPI.Controllers
             }
         }
 
-        [HttpPost("startPod")]
-        public async Task<IActionResult> StartPod([FromBody] PodRequest request)
+        [HttpPost("startDeployment")]
+        public async Task<IActionResult> StartDeployment([FromBody] PodRequest request)
         {
             try
             {
@@ -349,7 +387,7 @@ namespace ControlPlaneAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public async Task<IActionResult> DeletePod([FromBody] PodRequest request)
+        public async Task<IActionResult> DeleteDeployment([FromBody] PodRequest request)
         {
             if (request == null || string.IsNullOrEmpty(request.PodName))
             {
@@ -469,6 +507,51 @@ namespace ControlPlaneAPI.Controllers
                 return StatusCode(500, errorResponse);
             }
         }
+        
+        [HttpPost("scaleDownPod")]
+        public async Task<IActionResult> ScaleDownPod([FromBody] PodScaleRequest request)
+        {
+            try
+            {
+                var deployment = await _kubernetesClient.ReadNamespacedDeploymentAsync(request.PodName, _namespaceName);
+        
+                // Scale down by 1 if replicas are greater than 0
+                var currentReplicas = deployment.Spec.Replicas ?? 1;  // Default to 1 if null
+                if (currentReplicas > 1)
+                {
+                    deployment.Spec.Replicas = currentReplicas - 1;
+                    await _kubernetesClient.ReplaceNamespacedDeploymentAsync(deployment, request.PodName, _namespaceName);
+
+                    var response = new
+                    {
+                        PodName = request.PodName,
+                        Replicas = deployment.Spec.Replicas,
+                        Status = "Success",
+                        Message = $"Deployment {request.PodName} scaled down by 1. New replica count: {deployment.Spec.Replicas}."
+                    };
+
+                    return Ok(response);
+                }
+                else
+                {
+                    var errorResponse = new
+                    {
+                        Status = "Error",
+                        Message = "Cannot scale down, replicas are already at the minimum value of 1."
+                    };
+                    return BadRequest(errorResponse);
+                }
+            }
+            catch (Exception ex)
+            {
+                var errorResponse = new
+                {
+                    Status = "Error",
+                    Message = $"Failed to scale down pod: {ex.Message}"
+                };
+                return StatusCode(500, errorResponse);
+            }
+        }
 
         [HttpGet("getPodLogs/{podName}")]
         public async Task<IActionResult> GetPodLogs(string podName)
@@ -563,15 +646,7 @@ namespace ControlPlaneAPI.Controllers
                 return StatusCode(500, new { Status = "Error", Message = ex.Message });
             }
         }
-
-
-        public class DeploymentRequest
-        {
-            public string Ip { get; set; }
-            public List<double> Features { get; set; }
-        }
-
-
+        
         private async Task<string> DeployModelPod(string modelName)
         {
             var namespaceName = _namespaceName;
@@ -779,5 +854,13 @@ namespace ControlPlaneAPI.Controllers
         {
             public string? PodName { get; set; }
         }
+        
+        public class DeploymentRequest
+        {
+            public string Ip { get; set; }
+            public List<double> Features { get; set; }
+        }
+
+
     }
 }

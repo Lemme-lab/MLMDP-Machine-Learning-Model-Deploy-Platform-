@@ -4,15 +4,15 @@ metadata:
   namespace: model-deployments
   name: deployment-manager
 rules:
-  - apiGroups: ["apps"]
-    resources: ["deployments"]
-    verbs: ["create", "get", "list", "update", "delete"]
-  - apiGroups: [""]  # Core API group
-    resources: ["namespaces", "services", "pods", "pods/log"]
-    verbs: ["get", "list", "create", "update", "delete"]
-  - apiGroups: ["networking.k8s.io"]
-    resources: ["ingresses"]
-    verbs: ["get", "list", "create", "update", "delete"]
+  - apiGroups: [ "apps" ]
+    resources: [ "deployments" ]
+    verbs: [ "create", "get", "list", "update", "delete" ]
+  - apiGroups: [ "" ]  # Core API group
+    resources: [ "namespaces", "services", "pods", "pods/log" ]
+    verbs: [ "get", "list", "create", "update", "patch", "delete" ]  # Added "patch" for pods
+  - apiGroups: [ "networking.k8s.io" ]
+    resources: [ "ingresses" ]
+    verbs: [ "get", "list", "create", "update", "delete" ]
   - apiGroups: [ "autoscaling" ]
     resources: [ "horizontalpodautoscalers" ]
     verbs: [ "create", "get", "list", "watch", "update", "delete" ]

@@ -17,7 +17,7 @@ import {
   Volume
 } from "../Deployment";
 import { isEqual } from 'lodash';
-import {port} from "../constants";
+import { port } from "../constants";
 
 @Component({
   selector: 'app-deployment-list',
@@ -71,7 +71,6 @@ export class DeploymentListComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Helper method to handle API response
   // Helper method to handle API response
   handleApiResponse(data: any[]): void {
     const newDeploymentsList = data.map(item => new Deployment(
