@@ -28,8 +28,7 @@ MLMDP is a Kubernetes-based platform for deploying, managing, and monitoring mac
 - View detailed pod logs and status, including node information, container images, and resource usage.
 
 ### Flowchart
-![Blank diagram-7](https://github.com/user-attachments/assets/295e5752-0fbf-4e49-8cb1-4303853c8972)
-
+![Blank diagram-8](https://github.com/user-attachments/assets/05107e4b-d607-41c6-830a-8707e71b69e5)
 
 ## Getting Started
 
