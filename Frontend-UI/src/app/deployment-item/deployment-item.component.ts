@@ -11,6 +11,7 @@ import { MatGridListModule } from '@angular/material/grid-list';
 import { CardModule } from 'primeng/card';
 import { TerminalModule } from 'primeng/terminal';
 import { InputNumberModule } from 'primeng/inputnumber';
+import {port} from "../constants";
 
 interface Pod {
   podName: string;
@@ -82,7 +83,7 @@ export class DeploymentItemComponent implements OnInit {
 
   // Fetch pods using the updated API response structure
   getPodsForDeployment(deploymentName: string) {
-    const apiUrl = `http://127.0.0.1:55166/api/ControlPlane/getDeploymentPods/${deploymentName}`;
+    const apiUrl = `http://127.0.0.1:65339/api/ControlPlane/getDeploymentPods/${deploymentName}`;
     try {
       this.http.get<Pod[]>(apiUrl).subscribe({
         next: (data: Pod[]) => {
@@ -108,7 +109,8 @@ export class DeploymentItemComponent implements OnInit {
   private adjustReplicas(){
     console.log(this.deployment.name);
     console.log(this.modelSettings);
-    const apiUrl = `http://127.0.0.1:55166/api/ControlPlane/scalePod`;
+
+    const apiUrl = `http://127.0.0.1:65339/api/ControlPlane/scalePod`;
     const postData = {
       PodName: this.deployment.name,
       Replicas: this.modelSettings
@@ -152,21 +154,25 @@ export class DeploymentItemComponent implements OnInit {
   sendData() {
     console.log('Sending ML model data:', this.mlModelData);
 
-    const apiUrl = `http://` + this.deployment.service.clusterIP + `:` + "80" + `/predict/`;
-    console.log(apiUrl);
+
+    const apiUrl = `http://127.0.0.1:${port}/api/ControlPlane/callDeploymentAPI`;
+    const array: number[] = JSON.parse(this.mlModelData);
+
     const postData = {
-      features: [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0],
+      ip: `python-service-${this.deployment.name.replace('-deployment', '')}.model-deployments.svc.cluster.local`,
+      features: array,
     };
 
     this.http.post(apiUrl, postData).subscribe({
-      next: (response) => {
-        this.modelOutput = `${response}`;
+      next: (response: any) => {
         console.log('POST request successful:', response);
+        this.modelOutput = `Prediction: "${response.prediction}"`;
       },
       error: (error) => {
         console.error('Error in POST request:', error);
       }
     });
+
   }
 
   stopModel() {
@@ -174,7 +180,7 @@ export class DeploymentItemComponent implements OnInit {
     this.conditionsStatus1 = 'False';
     this.conditionsStatus2 = 'False';
 
-    const apiUrl = `http://127.0.0.1:55166/api/ControlPlane/stopPod`;
+    const apiUrl = `http://127.0.0.1:${port}/api/ControlPlane/stopPod`;
     const postData = {
       PodName: this.deployment.name,
     };
@@ -194,7 +200,7 @@ export class DeploymentItemComponent implements OnInit {
     this.conditionsStatus1 = 'True';
     this.conditionsStatus2 = 'True';
 
-    const apiUrl = `http://127.0.0.1:55166/api/ControlPlane/startPod`;
+    const apiUrl = `http://127.0.0.1:${port}/api/ControlPlane/startPod`;
     const postData = {
       PodName: this.deployment.name,
     };
@@ -212,7 +218,7 @@ export class DeploymentItemComponent implements OnInit {
   deleteDeployment() {
     console.log('Delete deployment:', this.deployment.name);
 
-    const apiUrl = `http://127.0.0.1:55166/api/ControlPlane/delete`;
+    const apiUrl = `http://127.0.0.1:${port}/api/ControlPlane/delete`;
 
     const requestBody = { PodName: this.deployment.name }; // Pass the pod name in the body
 

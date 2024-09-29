@@ -24,18 +24,18 @@
 
   <!-- Container Information and Volumes side by side -->
   <div class="p-grid container-volume-info">
-    <div class="p-col">
+    <div class="p-col" *ngIf="deployment.podTemplate && deployment.podTemplate.length > 0">
       <p><strong>Container:</strong> {{ deployment.podTemplate[0].containerName }}</p>
       <p><strong>Image:</strong> {{ deployment.podTemplate[0].image }}</p>
     </div>
-    <div class="p-col">
+    <div class="p-col" *ngIf="deployment.volumes && deployment.volumes.length > 0">
       <p><strong>Volume Type:</strong> {{ deployment.volumes[0].volumeType }}</p>
       <p><strong>Volume Claim:</strong> {{ deployment.volumes[0].claimName }}</p>
     </div>
   </div>
 
   <!-- Status and Conditions grouped side by side -->
-  <div class="p-grid status-info">
+  <div class="p-grid status-info" *ngIf="deployment.conditions && deployment.conditions.length > 0">
     <div class="p-col">
       <p><strong>Status:</strong> {{ deployment.conditions[0].type }} ({{ conditionsStatus1 }})</p>
     </div>
@@ -46,54 +46,56 @@
 
   <!-- Pod List with Chip Set (3xY grid) -->
   <div class="pod-chips-section">
-    <div class="pod-chips-section">
-      <mat-grid-list cols="3" rowHeight="50px" gutterSize="5px">
-        <mat-grid-tile *ngFor="let pod of podsList.slice(0, 9)">
-          <mat-chip class="pod-chip">{{ pod.podName }}</mat-chip>
-        </mat-grid-tile>
-      </mat-grid-list>
+    <mat-grid-list cols="3" rowHeight="50px" gutterSize="5px">
+      <mat-grid-tile *ngFor="let pod of podsList.slice(0, 9)">
+        <mat-chip class="pod-chip">{{ pod.podName }}</mat-chip>
+      </mat-grid-tile>
+    </mat-grid-list>
 
-      <!-- Display ellipsis if there are more than 9 pods -->
-      <div *ngIf="podsList.length > 9" class="more-indicator">
-        ...
+    <!-- Display ellipsis if there are more than 9 pods -->
+    <div *ngIf="podsList.length > 9" class="more-indicator">
+      ...
+    </div>
+  </div>
+
+  <!-- Conditionally hide ML model input, incrementer, and buttons based on deployment name -->
+  <ng-container *ngIf="deployment.name !== 'csharp-api-deployment' && deployment.name !== 'frontend-ui-deployment'; else placeholderSpacer">
+    <div class="ml-model-container">
+      <div class="ml-model-inputs">
+        <mat-form-field appearance="outline" class="input-field">
+          <mat-label>ML Model Data</mat-label>
+          <input matInput [(ngModel)]="mlModelData" placeholder="Enter model input" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="output-field">
+          <mat-label>Output</mat-label>
+          <input matInput [value]="modelOutput" readonly class="output-primary-color" />
+        </mat-form-field>
+      </div>
+
+      <!-- Incrementer section with buttons side by side -->
+      <div class="incrementer-controls">
+        <div class="incrementer-stack">
+          <button mat-raised-button color="primary" class="buttonNumberSelectorPlus" (click)="increment()">+</button>
+          <input class="incrementer-input" type="number" [(ngModel)]="modelSettings" min="1" max="100" readonly />
+          <button mat-raised-button color="primary" class="buttonNumberSelectorMinus" (click)="decrement()">−</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="ml-model-container">
-    <div class="ml-model-inputs">
-      <mat-form-field appearance="outline" class="input-field">
-        <mat-label>ML Model Data</mat-label>
-        <input matInput [(ngModel)]="mlModelData" placeholder="Enter model input" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="output-field">
-        <mat-label>Output</mat-label>
-        <input matInput [value]="modelOutput" readonly />
-      </mat-form-field>
+    <!-- Control Buttons with MUI color themes -->
+    <div class="button-container">
+      <button mat-raised-button color="primary" class="action-button" (click)="sendData()">Send Data</button>
+      <button mat-raised-button color="primary" class="action-button" (click)="toggleModel()">
+        {{ isModelRunning ? 'Stop' : 'Start' }}
+      </button>
+      <button mat-raised-button color="primary" class="action-button" (click)="deleteDeployment()">Delete</button>
     </div>
+  </ng-container>
 
-    <!-- Incrementer section with buttons side by side -->
-    <div class="incrementer-controls">
-      <div class="incrementer-stack">
-        <button mat-raised-button color="primary" class="buttonNumberSelectorPlus" (click)="increment()">+</button>
-        <input class="incrementer-input" type="number" [(ngModel)]="modelSettings" min="1" max="100" readonly />
-        <button mat-raised-button color="primary" class="buttonNumberSelectorMinus" (click)="decrement()">−</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Control Buttons -->
-  <!-- Control Buttons with MUI color themes -->
-  <!-- Control Buttons with MUI color themes -->
-  <div class="button-container">
-    <button mat-raised-button color="primary" class="action-button" (click)="sendData()">Send Data</button>
-    <button mat-raised-button color="primary" class="action-button" (click)="toggleModel()">
-      {{ isModelRunning ? 'Stop' : 'Start' }}
-    </button>
-    <button mat-raised-button color="primary" class="action-button" (click)="deleteDeployment()">Delete</button>
-  </div>
-
-
+  <!-- Placeholder spacer to maintain the card height when controls are hidden -->
+  <ng-template #placeholderSpacer>
+    <div class="spacer" style="height: 295px;"></div>
+  </ng-template>
 
 </p-card>

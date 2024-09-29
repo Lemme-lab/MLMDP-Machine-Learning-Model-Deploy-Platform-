@@ -3,8 +3,17 @@ import tensorflow as tf
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import numpy as np
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Adjust the origins as per your security requirements
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
+)
 
 # Fetch the model name and directory from environment variables
 model_name = os.getenv("MODEL_NAME")

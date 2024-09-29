@@ -63,17 +63,7 @@
   background-color: #d32f2f; /* Darker red on hover */
 }
 
-/* Delete Button (now matching the Start/Stop button style) */
-.delete-control-button {
-  padding: 12px 60px; /* Same size as the Start/Stop button */
-  font-size: 16px;
-  min-width: 200px; /* Minimum width for the delete button */
-  background-color: #2196f3; /* Blue for Delete button */
-}
 
-.delete-control-button:hover {
-  background-color: #1976d2; /* Darker blue on hover */
-}
 
 /* Custom terminal for logs */
 .custom-terminal {

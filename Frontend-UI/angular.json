@@ -89,7 +89,9 @@
               "@angular/material/prebuilt-themes/magenta-violet.css",
               "src/styles.css"
             ],
-            "scripts": []
+            "scripts": {
+              "build": "ng build --prod"
+            }
           }
         }
       }

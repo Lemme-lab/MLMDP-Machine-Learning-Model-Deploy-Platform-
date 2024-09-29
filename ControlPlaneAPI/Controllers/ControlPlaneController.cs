@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.Rest;
+using Newtonsoft.Json;
 
 namespace ControlPlaneAPI.Controllers
 {
@@ -36,107 +37,113 @@ namespace ControlPlaneAPI.Controllers
             return Ok("Control Plane API for managing ML models");
         }
 
-[HttpGet("getDeployments")]
-public async Task<IActionResult> GetAllDeployments()
-{
-    try
-    {
-        var deploymentList = await _kubernetesClient.ListNamespacedDeploymentAsync(_namespaceName);
-
-        if (deploymentList.Items.Count == 0)
+        [HttpGet("getDeployments")]
+        public async Task<IActionResult> GetAllDeployments()
         {
-            return Ok(new { Message = "No deployments found in the namespace." });
-        }
-
-        var deployments = new List<object>();
-
-        foreach (var deployment in deploymentList.Items)
-        {
-            object serviceDetails = null;
             try
             {
-                var deploymentName = deployment.Metadata.Name;
+                var deploymentList = await _kubernetesClient.ListNamespacedDeploymentAsync(_namespaceName);
 
-                // Remove '-deployment' suffix from the deployment name to match the service name
-                var serviceName = $"python-service-{deploymentName.Replace("-deployment", "")}";
-
-                // Fetch the service using the constructed service name
-                var service = await _kubernetesClient.ReadNamespacedServiceAsync(serviceName, _namespaceName);
-
-                if (service != null)
+                if (deploymentList.Items.Count == 0)
                 {
-                    serviceDetails = new
-                    {
-                        ClusterIP = service.Spec.ClusterIP,
-                        Ports = service.Spec.Ports?.Select(port => new { port.Port, port.TargetPort, port.Protocol })
-                    };
+                    return Ok(new { Message = "No deployments found in the namespace." });
                 }
-                else
-                {
-                    serviceDetails = new { Error = $"Service not found for deployment: {deploymentName}" };
-                }
-            }
-            catch (Exception serviceEx)
-            {
-                // Handle service retrieval errors
-                serviceDetails = new { Error = $"Error retrieving service: {serviceEx.Message}" };
-            }
 
-            deployments.Add(new
-            {
-                Name = deployment.Metadata.Name,
-                Namespace = deployment.Metadata.NamespaceProperty,
-                Replicas = deployment.Spec.Replicas,
-                AvailableReplicas = deployment.Status.AvailableReplicas ?? 0,
-                ReadyReplicas = deployment.Status.ReadyReplicas ?? 0,
-                CreationTimestamp = deployment.Metadata.CreationTimestamp,
-                Labels = deployment.Metadata.Labels ?? new Dictionary<string, string>(),
-                Annotations = deployment.Metadata.Annotations ?? new Dictionary<string, string>(),
-                Selector = deployment.Spec.Selector?.MatchLabels ?? new Dictionary<string, string>(),
-                Strategy = deployment.Spec.Strategy?.Type ?? "RollingUpdate",
-                MinReadySeconds = deployment.Spec.MinReadySeconds,
-                RevisionHistoryLimit = deployment.Spec.RevisionHistoryLimit ?? 10,
-                Conditions = deployment.Status.Conditions?.Select(c => new
+                var deployments = new List<object>();
+
+                foreach (var deployment in deploymentList.Items)
                 {
-                    Type = c.Type,
-                    Status = c.Status,
-                    LastTransitionTime = c.LastTransitionTime
-                }).ToList(),
-                PodTemplate = deployment.Spec.Template.Spec.Containers.Select(container => new
-                {
-                    ContainerName = container.Name,
-                    Image = container.Image,
-                    Ports = container.Ports?.Select(port => new { port.ContainerPort, port.Protocol }),
-                    Resources = new
+                    object serviceDetails = null;
+                    try
                     {
-                        Requests = container.Resources?.Requests,
-                        Limits = container.Resources?.Limits
-                    },
-                    Env = container.Env?.Select(envVar => new { envVar.Name, envVar.Value }),
-                    ImagePullPolicy = container.ImagePullPolicy
-                }),
-                OwnerReferences = deployment.Metadata.OwnerReferences?.Select(owner => new
-                {
-                    OwnerName = owner.Name,
-                    OwnerKind = owner.Kind
-                }),
-                Volumes = deployment.Spec.Template.Spec.Volumes?.Select(volume => new
-                {
-                    Name = volume.Name,
-                    VolumeType = volume.PersistentVolumeClaim != null ? "PersistentVolumeClaim" : "Other",
-                    ClaimName = volume.PersistentVolumeClaim?.ClaimName
-                }),
-                Service = serviceDetails // Add service details or error message
-            });
+                        var deploymentName = deployment.Metadata.Name;
+
+                        // Remove '-deployment' suffix from the deployment name to match the service name
+                        var serviceName = $"python-service-{deploymentName.Replace("-deployment", "")}";
+
+                        // Fetch the service using the constructed service name
+                        var service = await _kubernetesClient.ReadNamespacedServiceAsync(serviceName, _namespaceName);
+
+                        if (service != null)
+                        {
+                            serviceDetails = new
+                            {
+                                ClusterIP = service.Spec.ClusterIP,
+                                Ports = service.Spec.Ports?.Select(port =>
+                                    new { port.Port, port.TargetPort, port.Protocol })
+                            };
+                        }
+                        else
+                        {
+                            serviceDetails = new { Error = $"Service not found for deployment: {deploymentName}" };
+                        }
+                    }
+                    catch (Exception serviceEx)
+                    {
+                        // Handle service retrieval errors
+                        serviceDetails = new { Error = $"Error retrieving service: {serviceEx.Message}" };
+                    }
+
+                    deployments.Add(new
+                    {
+                        Name = deployment.Metadata.Name,
+                        Namespace = deployment.Metadata.NamespaceProperty,
+                        Replicas = deployment.Spec.Replicas,
+                        AvailableReplicas = deployment.Status.AvailableReplicas ?? 0,
+                        ReadyReplicas = deployment.Status.ReadyReplicas ?? 0,
+                        CreationTimestamp = deployment.Metadata.CreationTimestamp,
+                        Labels = deployment.Metadata.Labels ?? new Dictionary<string, string>(),
+                        Annotations = deployment.Metadata.Annotations ?? new Dictionary<string, string>(),
+                        Selector = deployment.Spec.Selector?.MatchLabels ?? new Dictionary<string, string>(),
+                        Strategy = deployment.Spec.Strategy?.Type ?? "RollingUpdate",
+                        MinReadySeconds = deployment.Spec.MinReadySeconds,
+                        RevisionHistoryLimit = deployment.Spec.RevisionHistoryLimit ?? 10,
+                        Conditions = deployment.Status.Conditions?.Select(c => new
+                        {
+                            Type = c.Type,
+                            Status = c.Status,
+                            LastTransitionTime = c.LastTransitionTime
+                        }).ToList(),
+                        PodTemplate = deployment.Spec.Template.Spec.Containers.Select(container => new
+                        {
+                            ContainerName = container.Name,
+                            Image = container.Image,
+                            Ports = container.Ports?.Select(port => new { port.ContainerPort, port.Protocol }),
+                            Resources = new
+                            {
+                                Requests = container.Resources?.Requests,
+                                Limits = container.Resources?.Limits
+                            },
+                            Env = container.Env?.Select(envVar => new { envVar.Name, envVar.Value }),
+                            ImagePullPolicy = container.ImagePullPolicy
+                        }),
+                        OwnerReferences = deployment.Metadata.OwnerReferences?.Select(owner => new
+                        {
+                            OwnerName = owner.Name,
+                            OwnerKind = owner.Kind
+                        }),
+                        Volumes = deployment.Spec.Template.Spec.Volumes?.Select(volume => new
+                        {
+                            Name = volume.Name,
+                            VolumeType = volume.PersistentVolumeClaim != null ? "PersistentVolumeClaim" : "Other",
+                            ClaimName = volume.PersistentVolumeClaim?.ClaimName
+                        }),
+                        Service = serviceDetails // Add service details or error message
+                    });
+                }
+
+                // Sort deployments by CreationTimestamp in descending order
+                var sortedDeployments = deployments
+                    .OrderByDescending(d => ((DateTimeOffset)((dynamic)d).CreationTimestamp))
+                    .ToList();
+
+                return Ok(sortedDeployments);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Error = $"Error retrieving deployments: {ex.Message}" });
+            }
         }
-
-        return Ok(deployments);
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(500, new { Error = $"Error retrieving deployments: {ex.Message}" });
-    }
-}
 
 
         [HttpGet("getDeploymentPods/{deploymentName}")]
@@ -508,6 +515,63 @@ public async Task<IActionResult> GetAllDeployments()
             });
         }
 
+        [HttpPost("callDeploymentAPI")]
+        public async Task<IActionResult> CallDeploymentAPI([FromBody] DeploymentRequest request)
+        {
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    var url = $"http://{request.Ip}/predict/";
+                    var requestData = new
+                    {
+                        features = request.Features
+                    };
+
+                    var jsonData = JsonConvert.SerializeObject(requestData);
+                    var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+                    // Send the POST request to the Python API
+                    var httpResponse = await httpClient.PostAsync(url, content);
+                    var responseContent = await httpResponse.Content.ReadAsStringAsync();
+
+                    Console.WriteLine($"Response Status Code: {httpResponse.StatusCode}");
+                    Console.WriteLine($"Response Content: {responseContent}");
+
+                    if (httpResponse.IsSuccessStatusCode)
+                    {
+                        // Deserialize the response to extract the 'prediction'
+                        var jsonResponse = JsonConvert.DeserializeObject<dynamic>(responseContent);
+
+                        // Extract the first value from the 'prediction' array
+                        var prediction = jsonResponse.prediction != null && jsonResponse.prediction[0] != null
+                            ? jsonResponse.prediction[0][0].ToString()
+                            : "No prediction found";
+
+                        return Ok(new { Status = "Success", Prediction = prediction });
+                    }
+                    else
+                    {
+                        return StatusCode((int)httpResponse.StatusCode,
+                            new { Status = "Error", Details = responseContent });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception occurred: {ex.Message}");
+                return StatusCode(500, new { Status = "Error", Message = ex.Message });
+            }
+        }
+
+
+        public class DeploymentRequest
+        {
+            public string Ip { get; set; }
+            public List<double> Features { get; set; }
+        }
+
+
         private async Task<string> DeployModelPod(string modelName)
         {
             var namespaceName = _namespaceName;
@@ -709,6 +773,11 @@ public async Task<IActionResult> GetAllDeployments()
         {
             public string PodName { get; set; }
             public int Replicas { get; set; }
+        }
+
+        public class PodRequest
+        {
+            public string? PodName { get; set; }
         }
     }
 }

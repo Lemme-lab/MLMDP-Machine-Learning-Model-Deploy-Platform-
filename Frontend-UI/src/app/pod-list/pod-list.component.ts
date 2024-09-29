@@ -7,6 +7,7 @@ import {Pod} from "../Pod";
 import {debounceTime, interval, Subject} from "rxjs";
 import {switchMap, takeUntil} from "rxjs/operators";
 import {PodtItemComponent} from "../pod-item/pod-item.component";
+import {port} from "../constants";
 
 @Component({
   selector: 'app-pods',
@@ -24,7 +25,7 @@ import {PodtItemComponent} from "../pod-item/pod-item.component";
 
 export class PodsComponent implements OnInit, OnDestroy {
   deploymentsList: Pod[] = [];
-  apiUrl: string = 'http://127.0.0.1:55166/api/ControlPlane/getallPods';
+  apiUrl: string = `http://127.0.0.1:${port}/api/ControlPlane/getallPods`;
   previousData: string = ''; // Stores the previous data as a string for comparison
   private unsubscribe$ = new Subject<void>(); // Subject to signal unsubscription
 

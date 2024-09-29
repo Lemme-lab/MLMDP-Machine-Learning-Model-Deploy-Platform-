@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { CommonModule } from '@angular/common';
+import {port} from "../constants";
 
 @Component({
   selector: 'app-bottom-panel-component',
@@ -51,7 +52,7 @@ export class BottomPanelComponent {
 
       const formData = new FormData();
       formData.append('file', this.selectedFile, this.selectedFile.name);
-      this.http.post('http://127.0.0.1:55166/api/ControlPlane/uploadModel', formData).subscribe({
+      this.http.post(`http://127.0.0.1:${port}/api/ControlPlane/uploadModel`, formData).subscribe({
         next: (response) => {
           console.log('Upload successful', response);
           this.uploadInProgress = false;

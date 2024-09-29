@@ -17,6 +17,7 @@ import {
   Volume
 } from "../Deployment";
 import { isEqual } from 'lodash';
+import {port} from "../constants";
 
 @Component({
   selector: 'app-deployment-list',
@@ -33,7 +34,7 @@ import { isEqual } from 'lodash';
 })
 export class DeploymentListComponent implements OnInit, OnDestroy {
   deploymentsList: Deployment[] = [];
-  apiUrl: string = 'http://127.0.0.1:55166/api/ControlPlane/getDeployments';
+  apiUrl: string = `http://127.0.0.1:${port}/api/ControlPlane/getDeployments`;
   private unsubscribe$ = new Subject<void>();
 
   constructor(private http: HttpClient) {}
@@ -74,38 +75,57 @@ export class DeploymentListComponent implements OnInit, OnDestroy {
   // Helper method to handle API response
   handleApiResponse(data: any[]): void {
     const newDeploymentsList = data.map(item => new Deployment(
-      item.name,
-      item.namespace,
-      item.replicas,
-      item.availableReplicas,
-      item.readyReplicas,
-      item.creationTimestamp,
-      item.labels || {}, // Provide empty object if null
-      item.annotations || {}, // Provide empty object if null
-      item.selector || {}, // Provide empty object if null
-      item.strategy,
-      item.minReadySeconds ?? null, // Handle null
-      item.revisionHistoryLimit ?? 10, // Default to 10 if not available
-      item.conditions.map((c: any) => new Condition(c.type, c.status, c.lastTransitionTime)),
-      item.podTemplate.map((p: any) => new PodTemplate(
-        p.containerName,
-        p.image,
-        p.ports.map((port: any) => new ContainerPort(port.containerPort, port.protocol)),
-        p.resources,
-        p.env,
-        p.imagePullPolicy
-      )),
-      item.volumes.map((v: any) => new Volume(v.name, v.volumeType, v.claimName)),
-      item.ownerReferences ? item.ownerReferences.map((o: any) => new OwnerReference(o.apiVersion, o.kind, o.name, o.uid)) : null, // Handle ownerReferences if present
-      item.service ? new Service(
-        item.service.clusterIP || null,
-        item.service.ports ? item.service.ports.map((port: any) => new ServicePort(
-          port.port,
-          new TargetPort(port.targetPort.value),
-          port.protocol
-        )) : [], // Ensure ports exist or provide an empty array
-        item.service.error || null
-      ) : null // Handle service and its fields
+      item.name || 'Unknown', // Default to 'Unknown' if name is missing
+      item.namespace || 'default', // Default to 'default' if namespace is missing
+      item.replicas ?? 0, // Default to 0 if replicas are missing
+      item.availableReplicas ?? 0, // Default to 0 if availableReplicas are missing
+      item.readyReplicas ?? 0, // Default to 0 if readyReplicas are missing
+      item.creationTimestamp || 'N/A', // Default to 'N/A' if timestamp is missing
+      item.labels || {}, // Provide empty object if labels are missing
+      item.annotations || {}, // Provide empty object if annotations are missing
+      item.selector || {}, // Provide empty object if selector is missing
+      item.strategy || 'RollingUpdate', // Default strategy if not provided
+      item.minReadySeconds ?? 0, // Default to 0 if minReadySeconds are missing
+      item.revisionHistoryLimit ?? 10, // Default to 10 if revisionHistoryLimit is missing
+      Array.isArray(item.conditions) && item.conditions.length > 0
+        ? item.conditions.map((c: any) => new Condition(c.type || 'Unknown', c.status || 'Unknown', c.lastTransitionTime || 'N/A'))
+        : [], // Handle empty or undefined conditions
+      Array.isArray(item.podTemplate) && item.podTemplate.length > 0
+        ? item.podTemplate.map((p: any) => new PodTemplate(
+          p.containerName || 'Unknown',
+          p.image || 'Unknown',
+          Array.isArray(p.ports) && p.ports.length > 0
+            ? p.ports.map((port: any) => new ContainerPort(port.containerPort ?? 0, port.protocol || 'TCP'))
+            : [], // Handle empty or undefined ports
+          p.resources || {}, // Default to empty object if resources are missing
+          p.env || [], // Default to empty array if environment variables are missing
+          p.imagePullPolicy || 'IfNotPresent' // Default to 'IfNotPresent' if imagePullPolicy is missing
+        ))
+        : [], // Handle empty or undefined podTemplate
+      Array.isArray(item.volumes) && item.volumes.length > 0
+        ? item.volumes.map((v: any) => new Volume(v.name || 'Unknown', v.volumeType || 'EmptyDir', v.claimName || 'N/A'))
+        : [], // Handle empty or undefined volumes
+      Array.isArray(item.ownerReferences) && item.ownerReferences.length > 0
+        ? item.ownerReferences.map((o: any) => new OwnerReference(
+          o.apiVersion || 'Unknown',
+          o.kind || 'Unknown',
+          o.name || 'Unknown',
+          o.uid || 'N/A'
+        ))
+        : null, // Handle empty or undefined ownerReferences
+      item.service
+        ? new Service(
+          item.service.clusterIP || 'None',
+          Array.isArray(item.service.ports) && item.service.ports.length > 0
+            ? item.service.ports.map((port: any) => new ServicePort(
+              port.port ?? 0,
+              new TargetPort(port.targetPort?.value || 0),
+              port.protocol || 'TCP'
+            ))
+            : [], // Handle empty or undefined service ports
+          item.service.error || null // Default to null if service error is missing
+        )
+        : null // Handle null service
     ));
 
     // Only update the list if the new data is different from the current list
@@ -113,7 +133,6 @@ export class DeploymentListComponent implements OnInit, OnDestroy {
       this.deploymentsList = newDeploymentsList;
     }
   }
-
 
   ngOnDestroy(): void {
     // Signal unsubscription to avoid multiple intervals
