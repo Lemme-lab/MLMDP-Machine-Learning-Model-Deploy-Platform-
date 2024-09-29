@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/0d7b3dca-0e4e-4e3c-8ab1-45d8721fb0c8)# MLMDP - Machine Learning Models Deployment Platform
+# MLMDP - Machine Learning Models Deployment Platform
 
 MLMDP is a Kubernetes-based platform for deploying, managing, and monitoring machine learning models at scale. With features for model deployment, scaling, logs, and monitoring, MLMDP simplifies the process of running ML models in production.
 
