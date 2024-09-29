@@ -12,8 +12,6 @@ MLMDP is a Kubernetes-based platform for deploying, managing, and monitoring mac
 - **Service Exposure**: Deployed models are exposed via Kubernetes LoadBalancer services, with service IPs and ports dynamically allocated.
 
 ## Screenshots
-### Flowchart
-![Blank diagram-6](https://github.com/user-attachments/assets/e65eb9db-afbb-4342-b8a6-0310e3ac9108)
 
 ### Deployment Dashboard
 
@@ -28,6 +26,10 @@ MLMDP is a Kubernetes-based platform for deploying, managing, and monitoring mac
 <img width="1728" alt="Screenshot 2024-09-29 at 16 09 17" src="https://github.com/user-attachments/assets/91bc476d-de59-4d36-95c3-6808e82a0b0e">
 
 - View detailed pod logs and status, including node information, container images, and resource usage.
+
+### Flowchart
+![Blank diagram-7](https://github.com/user-attachments/assets/295e5752-0fbf-4e49-8cb1-4303853c8972)
+
 
 ## Getting Started
 
