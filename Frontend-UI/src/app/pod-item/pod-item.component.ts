@@ -75,8 +75,6 @@ export class PodtItemComponent implements OnInit {
       name = this.Pod.podName.substring(0, index + "-deployment".length);
     }
 
-
-
     const apiUrl2 = `http://127.0.0.1:${port}/api/ControlPlane/scaleDownPod`;
     const postData = {
       PodName: name

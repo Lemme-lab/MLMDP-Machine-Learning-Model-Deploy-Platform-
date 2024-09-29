@@ -14,5 +14,5 @@ import {RouterOutlet} from "@angular/router"; // Import TerminalService
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'Frontend-UI';
+  title = 'MLMDP-Frontend-UI';
 }

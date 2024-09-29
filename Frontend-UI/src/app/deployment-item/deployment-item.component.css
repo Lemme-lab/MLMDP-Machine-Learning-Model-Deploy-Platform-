@@ -122,12 +122,12 @@
 }
 /* Light green for running deployment */
 .running {
-  color: lightgreen;
+  color: rgb(130,245,250);
 }
 
 /* Light red for non-running deployment */
 .not-running {
-  color: lightcoral;
+  color: orangered;
 }
 
 .output-primary-color {

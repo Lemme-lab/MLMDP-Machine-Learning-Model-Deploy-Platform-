@@ -655,7 +655,7 @@ namespace ControlPlaneAPI.Controllers
             await EnsureNamespaceExists(namespaceName);
 
             var sanitizedModelName = modelName.ToLower().Replace("_", "-");
-            var image = "leemme/ml-pythonenv:latest"; // Your Docker image
+            var image = "ml-pythonenv:latest"; // Your Docker image
 
             var deployment = new V1Deployment
             {
